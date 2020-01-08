@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.codegen.state.TypeMapperUtilsKt;
 import org.jetbrains.kotlin.config.JvmDefaultMode;
 import org.jetbrains.kotlin.config.LanguageFeature;
+import org.jetbrains.kotlin.config.LanguageVersionSettings;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.Annotated;
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor;
@@ -56,7 +57,10 @@ import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterSignature
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.TypeUtils;
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor;
@@ -71,6 +75,7 @@ import static org.jetbrains.kotlin.codegen.CodegenUtilKt.generateBridgeForMainFu
 import static org.jetbrains.kotlin.codegen.serialization.JvmSerializationBindings.METHOD_FOR_FUNCTION;
 import static org.jetbrains.kotlin.codegen.state.KotlinTypeMapper.isAccessor;
 import static org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DECLARATION;
+import static org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DELEGATION;
 import static org.jetbrains.kotlin.descriptors.ModalityKt.isOverridable;
 import static org.jetbrains.kotlin.resolve.DescriptorToSourceUtils.getSourceFromDescriptor;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.*;
@@ -1036,17 +1041,24 @@ public class FunctionCodegen {
     }
 
     @NotNull
-    public static String[] getThrownExceptions(@NotNull FunctionDescriptor function, @NotNull KotlinTypeMapper mapper) {
-        return ArrayUtil.toStringArray(CollectionsKt.map(getThrownExceptions(function), d -> mapper.mapClass(d).getInternalName()));
+    public static String[] getThrownExceptions(@NotNull FunctionDescriptor function, @NotNull KotlinTypeMapper typeMapper) {
+        return ArrayUtil.toStringArray(CollectionsKt.map(
+                getThrownExceptions(function, typeMapper.getLanguageVersionSettings()),
+                d -> typeMapper.mapClass(d).getInternalName()
+        ));
     }
 
     @NotNull
-    public static List<ClassDescriptor> getThrownExceptions(@NotNull FunctionDescriptor function) {
-        AnnotationDescriptor annotation = function.getAnnotations().findAnnotation(new FqName("kotlin.throws"));
-        if (annotation == null) {
-            annotation = function.getAnnotations().findAnnotation(new FqName("kotlin.jvm.Throws"));
+    public static List<ClassDescriptor> getThrownExceptions(
+            @NotNull FunctionDescriptor function,
+            @NotNull LanguageVersionSettings languageVersionSettings
+    ) {
+        if (function.getKind() == DELEGATION &&
+            languageVersionSettings.supportsFeature(LanguageFeature.DoNotGenerateThrowsForDelegatedKotlinMembers)) {
+            return Collections.emptyList();
         }
 
+        AnnotationDescriptor annotation = function.getAnnotations().findAnnotation(new FqName("kotlin.jvm.Throws"));
         if (annotation == null) return Collections.emptyList();
 
         Collection<ConstantValue<?>> values = annotation.getAllValueArguments().values();
