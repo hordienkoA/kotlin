@@ -1861,6 +1861,11 @@ public class DiagnosticsTestGenerated extends AbstractDiagnosticsTest {
                 runTest("compiler/testData/diagnostics/tests/callableReference/kt32267.kt");
             }
 
+            @TestMetadata("kt34314.kt")
+            public void testKt34314() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/kt34314.kt");
+            }
+
             @TestMetadata("kt7430_wrongClassOnLHS.kt")
             public void testKt7430_wrongClassOnLHS() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/kt7430_wrongClassOnLHS.kt");
