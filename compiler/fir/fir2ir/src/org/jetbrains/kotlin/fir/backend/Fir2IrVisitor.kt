@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.types.impl.IrErrorTypeImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -54,7 +53,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi2ir.PsiSourceManager
 import org.jetbrains.kotlin.types.AbstractStrictEqualityTypeChecker
-import org.jetbrains.kotlin.types.Variance
 import java.util.*
 
 class Fir2IrVisitor(
