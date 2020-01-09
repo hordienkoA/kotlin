@@ -297,7 +297,7 @@ class RemoveRedundantConstructorKeywordProcessing :
 
 
     override fun apply(element: KtPrimaryConstructor) {
-        element.removeRedundantConstructorKeywordAndSpace()
+        element.getConstructorKeyword()?.delete()
     }
 }
 
